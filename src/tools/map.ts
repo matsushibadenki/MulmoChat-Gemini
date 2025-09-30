@@ -1,3 +1,5 @@
+// src/tools/map.ts
+
 import { ToolPlugin, ToolContext, ToolResult } from "./type";
 import MapView from "./views/map.vue";
 import MapPreview from "./previews/map.vue";
@@ -6,7 +8,6 @@ const toolName = "presentMap";
 
 export const plugin: ToolPlugin = {
   toolDefinition: {
-    type: "function",
     name: toolName,
     description:
       "Show a location on a map by providing a location name or address",
