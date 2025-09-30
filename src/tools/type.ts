@@ -6,6 +6,7 @@ import * as MapPlugin from "./map";
 import * as ExaPlugin from "./exa";
 import * as OthelloPlugin from "./othello";
 import * as CanvasPlugin from "./canvas";
+import * as WikipediaPlugin from "./wikipedia"; // 追記
 import type { StartApiResponse } from "../../server/types";
 import type { MulmoScript } from "mulmocast";
 import { v4 as uuidv4 } from "uuid";
@@ -70,6 +71,7 @@ const pluginList = [
   ExaPlugin,
   OthelloPlugin,
   CanvasPlugin,
+  WikipediaPlugin,
 ];
 
 export const pluginTools = (startResponse?: StartApiResponse) => {

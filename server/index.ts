@@ -38,6 +38,13 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+// Future implementation: Handle WebSocket upgrade requests
+/*
+server.on('upgrade', (request, socket, head) => {
+    upgradeWebSocket(request, socket, head);
+});
+*/

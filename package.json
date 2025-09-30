@@ -14,10 +14,12 @@
     "build:server": "tsc -p server/tsconfig.json",
     "lint": "eslint src server",
     "preview": "vite preview",
-    "start": "NODE_ENV=production node server/dist/index.js",
+    "start": "NODE_ENV=production node build/index.js",
     "format": "prettier --write '{src,server}/**/*.{ts,json,yaml,vue}'"
   },
   "dependencies": {
+    "@google-cloud/speech": "^6.6.0",
+    "@google-cloud/text-to-speech": "^6.3.0",
     "@google/genai": "^1.17.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",

@@ -1,73 +1,145 @@
 import express, { Request, Response, Router } from "express";
 import dotenv from "dotenv";
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, HarmCategory, HarmBlockThreshold } from "@google/genai";
+import { TextToSpeechClient } from "@google-cloud/text-to-speech";
 import { puppeteerCrawlerAgent } from "mulmocast";
 import { StartApiResponse } from "../types";
 import { exaSearch, hasExaApiKey } from "../exaSearch";
+
 dotenv.config();
 
 const router: Router = express.Router();
 
-// Session start endpoint
+// Gemini and TTS clients
+const geminiKey = process.env.GEMINI_API_KEY;
+const genAI = geminiKey ? new GoogleGenAI({ apiKey: geminiKey }) : null;
+const ttsClient = new TextToSpeechClient();
+// const speechClient = new SpeechClient(); // Future implementation
+
+// Future implementation: WebSocket server for streaming Speech-to-Text
+/*
+const wss = new WebSocketServer({ noServer: true });
+
+wss.on('connection', (ws) => {
+  console.log('Client connected for speech recognition');
+
+  const recognizeStream = speechClient.streamingRecognize({
+      config: {
+          encoding: 'WEBM_OPUS', // or another format from client
+          sampleRateHertz: 48000,
+          languageCode: 'en-US',
+      },
+      interimResults: true,
+  });
+
+  recognizeStream.on('data', data => {
+      // Send transcription back to client
+      ws.send(JSON.stringify(data));
+  });
+
+  ws.on('message', (message) => {
+      // Forward audio data from client to Google Cloud Speech API
+      recognizeStream.write(message);
+  });
+
+  ws.on('close', () => {
+      console.log('Client disconnected');
+      recognizeStream.destroy();
+  });
+
+  ws.on('error', (error) => {
+      console.error('WebSocket error:', error);
+      recognizeStream.destroy();
+  });
+});
+
+export const upgradeWebSocket = (request, socket, head) => {
+    wss.handleUpgrade(request, socket, head, (ws) => {
+        wss.emit('connection', ws, request);
+    });
+};
+*/
+
+// Session start endpoint (modified to remove OpenAI)
 router.get("/start", async (req: Request, res: Response): Promise<void> => {
-  const openaiKey = process.env.OPENAI_API_KEY;
   const googleMapKey = process.env.GOOGLE_MAP_API_KEY;
 
-  if (!openaiKey) {
-    res
-      .status(500)
-      .json({ error: "OPENAI_API_KEY environment variable not set" });
+  const responseData: StartApiResponse = {
+    success: true,
+    message: "Session configured for Gemini",
+    googleMapKey,
+    hasExaApiKey,
+  };
+  res.json(responseData);
+});
+
+// New chat endpoint for Gemini
+router.post("/chat", async (req: Request, res: Response): Promise<void> => {
+  if (!genAI) {
+    res.status(500).json({ error: "GEMINI_API_KEY not configured" });
     return;
   }
+  const { history, message, tools } = req.body;
 
   try {
-    const sessionConfig = JSON.stringify({
-      session: {
-        type: "realtime",
-        model: "gpt-realtime",
-        audio: {
-          output: { voice: "shimmer" },
+    const model = genAI.getGenerativeModel({
+      model: "gemini-1.5-flash",
+      safetySettings: [
+        {
+          category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+          threshold: HarmBlockThreshold.BLOCK_NONE,
         },
-      },
-    });
-
-    const response = await fetch(
-      "https://api.openai.com/v1/realtime/client_secrets",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${openaiKey}`,
-          "Content-Type": "application/json",
+        {
+            category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+            threshold: HarmBlockThreshold.BLOCK_NONE,
         },
-        body: sessionConfig,
-      },
-    );
-
-    if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    const responseData: StartApiResponse = {
-      success: true,
-      message: "Session started",
-      ephemeralKey: data.value,
-      googleMapKey,
-      hasExaApiKey,
-    };
-    res.json(responseData);
-  } catch (error: unknown) {
-    console.error("Failed to generate ephemeral key:", error);
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-    res.status(500).json({
-      error: "Failed to generate ephemeral key",
-      details: errorMessage,
+        {
+            category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+            threshold: HarmBlockThreshold.BLOCK_NONE,
+        },
+        {
+            category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+            threshold: HarmBlockThreshold.BLOCK_NONE,
+        },
+      ],
+      tools: tools ? { functionDeclarations: tools } : undefined,
     });
+    
+    const chat = model.startChat({ history });
+    const result = await chat.sendMessage(message);
+    const response = result.response;
+    res.json({ response });
+
+  } catch (error) {
+    console.error("Gemini chat error:", error);
+    res.status(500).json({ error: "Failed to get response from Gemini" });
   }
 });
 
-// Generate image endpoint
+// New Text-to-Speech endpoint
+router.post("/synthesize-speech", async (req: Request, res: Response): Promise<void> => {
+    const { text } = req.body;
+    if (!text) {
+        res.status(400).json({ error: "Text is required" });
+        return;
+    }
+
+    try {
+        const request = {
+            input: { text },
+            voice: { languageCode: 'en-US', ssmlGender: 'NEUTRAL' as const },
+            audioConfig: { audioEncoding: 'MP3' as const },
+        };
+        const [response] = await ttsClient.synthesizeSpeech(request);
+        res.json({ audioContent: response.audioContent?.toString('base64') });
+    } catch (error) {
+        console.error("Speech synthesis error:", error);
+        res.status(500).json({ error: "Failed to synthesize speech" });
+    }
+});
+
+
+// Generate image endpoint (no changes needed here, as it already uses Gemini)
 router.post(
   "/generate-image",
   async (req: Request, res: Response): Promise<void> => {
@@ -78,9 +150,7 @@ router.post(
       return;
     }
 
-    const geminiKey = process.env.GEMINI_API_KEY;
-
-    if (!geminiKey) {
+    if (!genAI) {
       res
         .status(500)
         .json({ error: "GEMINI_API_KEY environment variable not set" });
@@ -88,8 +158,8 @@ router.post(
     }
 
     try {
-      const ai = new GoogleGenAI({ apiKey: geminiKey });
-      const model = "gemini-2.5-flash-image-preview";
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-image-preview" });
+
       const contents: {
         text?: string;
         inlineData?: { mimeType: string; data: string };
@@ -97,8 +167,8 @@ router.post(
       for (const image of images ?? []) {
         contents.push({ inlineData: { mimeType: "image/png", data: image } });
       }
-      const response = await ai.models.generateContent({ model, contents });
-      const parts = response.candidates?.[0]?.content?.parts ?? [];
+      const response = await model.generateContent({ contents });
+      const parts = response.response.candidates?.[0]?.content?.parts ?? [];
       const returnValue: {
         success: boolean;
         message: string | undefined;
@@ -280,5 +350,53 @@ router.get(
     }
   },
 );
+
+// Wikipedia Search Endpoint
+router.post("/wikipedia-search", async (req: Request, res: Response): Promise<void> => {
+    const { query } = req.body;
+    if (!query) {
+        res.status(400).json({ error: "Query is required" });
+        return;
+    }
+
+    try {
+        // 1. Search for Wikipedia article
+        const searchUrl = `https://ja.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&format=json`;
+        const searchResponse = await fetch(searchUrl);
+        const searchData = await searchResponse.json();
+        if (!searchData.query.search.length) {
+            res.json({ success: false, message: "No article found." });
+            return;
+        }
+        const articleTitle = searchData.query.search[0].title;
+
+        // 2. Get article summary
+        const summaryUrl = `https://ja.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(articleTitle)}&prop=extracts&exintro&explaintext&format=json`;
+        const summaryResponse = await fetch(summaryUrl);
+        const summaryData = await summaryResponse.json();
+        const page = Object.values(summaryData.query.pages)[0] as any;
+        const summary = page.extract;
+        const pageUrl = `https://ja.wikipedia.org/wiki/${encodeURIComponent(articleTitle)}`;
+
+        // 3. Get main image from the article
+        const imageUrl = `https://ja.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(articleTitle)}&prop=pageimages&pithumbsize=500&format=json`;
+        const imageResponse = await fetch(imageUrl);
+        const imageData = await imageResponse.json();
+        const imagePage = Object.values(imageData.query.pages)[0] as any;
+        const mainImage = imagePage.thumbnail?.source;
+
+        res.json({
+            success: true,
+            title: articleTitle,
+            summary,
+            url: pageUrl,
+            imageUrl: mainImage,
+        });
+
+    } catch (error) {
+        console.error("Wikipedia search error:", error);
+        res.status(500).json({ error: "Failed to search Wikipedia" });
+    }
+});
 
 export default router;
