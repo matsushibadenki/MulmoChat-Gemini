@@ -20,7 +20,7 @@
   "dependencies": {
     "@google-cloud/speech": "^6.6.0",
     "@google-cloud/text-to-speech": "^6.3.0",
-    "@google/genai": "^1.17.0",
+    "@google/generative-ai": "^0.24.1",
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
     "exa-js": "^1.9.3",
