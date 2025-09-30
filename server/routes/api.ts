@@ -1,5 +1,5 @@
 // server/routes/api.ts
-// 構文エラーとモデル名を修正
+// Gemini APIのモデル名を現在利用可能な最新の安定版に修正
 
 import express, { Request, Response, Router } from "express";
 import dotenv from "dotenv";
@@ -86,7 +86,7 @@ router.post("/chat", async (req: Request, res: Response): Promise<void> => {
 
   try {
     const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash-latest",
+      model: "gemini-1.5-pro-latest",
       safetySettings: [
         {
           category: HarmCategory.HARM_CATEGORY_HARASSMENT,
@@ -161,7 +161,7 @@ router.post(
     }
 
     try {
-      const model = genAI.getGenerativeModel({ model: "gemini-pro-vision" });
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
       const contents: {
         text?: string;
