@@ -33,3 +33,6 @@ Click the "Start Voice Chat", and start talking to the AI, which has a capabilit
 rm -rf node_modules yarn.lock
 yarn install
 yarn dev
+
+## **Print a list of available AI models**
+yarn tsx listModels.ts
