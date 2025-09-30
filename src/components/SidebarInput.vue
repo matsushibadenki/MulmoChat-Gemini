@@ -1,13 +1,23 @@
 <template>
-  <div class="space-y-2 flex-shrink-0">
-    <div class="flex gap-2">
+  <div class="flex-shrink-0">
+    <div class="flex items-center gap-2">
       <button
         @click="triggerImageUpload"
-        class="px-3 py-2 bg-gray-100 text-gray-600 border border-gray-300 rounded hover:bg-gray-200 flex items-center justify-center"
+        class="p-2 bg-gray-100 text-gray-600 border border-gray-300 rounded hover:bg-gray-200 flex-shrink-0"
         title="Upload image"
       >
-        <span class="text-lg">+</span>
+        <span class="material-icons text-lg leading-none">add</span>
       </button>
+
+      <input
+        ref="fileInput"
+        type="file"
+        accept="image/png,image/jpeg"
+        multiple
+        class="hidden"
+        @change="handleImageUpload"
+      />
+
       <input
         :value="userInput"
         @input="$emit('update:userInput', ($event.target as HTMLInputElement).value)"
@@ -17,22 +27,15 @@
         placeholder="Type a message"
         class="flex-1 border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
       />
+
+      <button
+        @click="$emit('sendTextMessage')"
+        :disabled="!chatActive || !userInput.trim()"
+        class="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50 flex-shrink-0"
+      >
+        Send
+      </button>
     </div>
-    <input
-      ref="fileInput"
-      type="file"
-      accept="image/png,image/jpeg"
-      multiple
-      class="hidden"
-      @change="handleImageUpload"
-    />
-    <button
-      @click="$emit('sendTextMessage')"
-      :disabled="!chatActive || !userInput.trim()"
-      class="w-full px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
-    >
-      Send Message
-    </button>
   </div>
 </template>
 
