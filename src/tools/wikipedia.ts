@@ -1,3 +1,5 @@
+// src/tools/wikipedia.ts
+
 import { ToolPlugin, ToolContext, ToolResult } from "./type";
 import WikipediaView from "./views/wikipedia.vue";
 import WikipediaPreview from "./previews/wikipedia.vue";
@@ -5,7 +7,6 @@ import WikipediaPreview from "./previews/wikipedia.vue";
 const toolName = "searchWikipedia";
 
 const toolDefinition = {
-  type: "function" as const,
   name: toolName,
   description:
     "Search Wikipedia for factual information about a topic. Use this for academic subjects, real-world things like animals, plants, historical events, or specific people when the user wants accurate information and real images instead of generated ones.",
