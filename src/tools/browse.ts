@@ -1,3 +1,5 @@
+// src/tools/browse.ts
+
 import { ToolPlugin, ToolContext, ToolResult } from "./type";
 import BrowseView from "./views/browse.vue";
 import BrowsePreview from "./previews/browse.vue";
@@ -51,7 +53,6 @@ async function handleTwitterEmbed(url: string): Promise<void> {
 }
 
 const toolDefinition = {
-  type: "function" as const,
   name: toolName,
   description:
     "Browse and extract content from a web page using the provided URL.",
