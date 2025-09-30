@@ -16,7 +16,8 @@ async function listModels() {
   try {
     const response = await fetch(url);
     if (!response.ok) {
-      throw new Error(`API request failed with status ${response.status}`);
+      const errorBody = await response.text();
+      throw new Error(`API request failed with status ${response.status}: ${errorBody}`);
     }
     const data = await response.json();
     

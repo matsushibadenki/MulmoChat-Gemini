@@ -1,6 +1,6 @@
 <template>
-  <div class="p-4 space-y-4">
-    <div role="toolbar" class="flex justify-between items-center">
+  <div class="p-4 flex flex-col h-screen">
+    <div role="toolbar" class="flex justify-between items-center flex-shrink-0 mb-4">
       <h1 class="text-2xl font-bold">
         MulmoChat
         <span class="hidden sm:inline text-sm text-gray-500 font-normal"
@@ -22,11 +22,8 @@
       </button>
     </div>
 
-    <div
-      class="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4"
-      style="height: calc(100vh - 80px)"
-    >
-      <div class="flex-1 flex flex-col min-h-0">
+    <div class="flex-1 flex flex-row space-x-4 min-h-0">
+      <div class="w-2/3 flex flex-col min-h-0">
         <div class="flex-1 border rounded bg-gray-50 overflow-hidden">
           <component
             v-if="
@@ -48,22 +45,32 @@
         </div>
       </div>
 
-      <Sidebar
-        ref="sidebarRef"
-        :chat-active="chatActive"
-        :connecting="connecting"
-        :plugin-results="toolResults"
-        :is-generating-image="isGeneratingImage"
-        :generating-message="generatingMessage"
-        :selected-result="selectedResult"
+      <div class="w-1/3 flex flex-col min-h-0 bg-gray-50 border rounded p-4 space-y-4">
+        <SidebarChatHistory
+          ref="sidebarChatHistoryRef"
+          :plugin-results="toolResults"
+          :is-generating-image="isGeneratingImage"
+          :generating-message="generatingMessage"
+          :selected-result="selectedResult"
+          @select-result="handleSelectResult"
+        />
+        <SidebarAudioControls
+          :chat-active="chatActive"
+          :connecting="connecting"
+          :is-muted="isMuted"
+          @start-chat="startChat"
+          @stop-chat="stopChat"
+          @toggle-mute="toggleMute"
+        />
+      </div>
+    </div>
+
+    <div class="flex-shrink-0 pt-4">
+      <SidebarInput
         :user-input="userInput"
-        :is-muted="isMuted"
-        @start-chat="startChat"
-        @stop-chat="stopChat"
-        @toggle-mute="toggleMute"
-        @select-result="handleSelectResult"
-        @send-text-message="sendTextMessage"
+        :chat-active="chatActive"
         @update:user-input="userInput = $event"
+        @send-text-message="sendTextMessage"
         @upload-images="handleUploadImages"
       />
     </div>
@@ -121,12 +128,15 @@ import {
 } from "./tools/type";
 import { createUploadedImageResult } from "./tools/generateImage";
 import type { StartApiResponse } from "../server/types";
-import Sidebar from "./components/Sidebar.vue";
+import SidebarChatHistory from "./components/SidebarChatHistory.vue";
+import SidebarAudioControls from "./components/SidebarAudioControls.vue";
+import SidebarInput from "./components/SidebarInput.vue";
 
 const SYSTEM_PROMPT_KEY = "system_prompt_v2_gemini";
 const DEFAULT_SYSTEM_PROMPT =
   "You are a teacher who explains various things in a way that even middle school students can easily understand. When words alone are not enough, you MUST use the generateImage API to draw pictures and use them to help explain. When you are talking about places, objects, people, movies, books and other things, you MUST use the generateImage API to draw pictures to make the conversation more engaging.";
-const sidebarRef = ref<InstanceType<typeof Sidebar> | null>(null);
+
+const sidebarChatHistoryRef = ref<InstanceType<typeof SidebarChatHistory> | null>(null);
 const connecting = ref(false);
 const systemPrompt = ref(
   localStorage.getItem(SYSTEM_PROMPT_KEY) || DEFAULT_SYSTEM_PROMPT,
@@ -161,7 +171,7 @@ onMounted(async () => {
 
 
 const scrollToBottomOfSideBar = () => {
-  sidebarRef.value?.scrollToBottom();
+  sidebarChatHistoryRef.value?.scrollToBottom();
 }
 
 const scrollCurrentResultToTop = () => {
@@ -290,10 +300,15 @@ const synthesizeAndPlay = async (text: string) => {
             body: JSON.stringify({ text }),
         });
         const data = await response.json();
-        if (data.audioContent && sidebarRef.value?.audioEl) {
-            const audioSrc = `data:audio/mp3;base64,${data.audioContent}`;
-            sidebarRef.value.audioEl.src = audioSrc;
-            sidebarRef.value.audioEl.play();
+        if (data.audioContent) {
+            // You might need a ref to the audio element in SidebarAudioControls
+            // For now, let's assume it can be accessed or handled globally/via event bus
+            const audioEl = document.querySelector('audio');
+            if (audioEl) {
+              const audioSrc = `data:audio/mp3;base64,${data.audioContent}`;
+              audioEl.src = audioSrc;
+              audioEl.play();
+            }
         }
     } catch (error) {
         console.error("Failed to synthesize or play audio:", error);
@@ -407,7 +422,6 @@ const toggleMute = () => {
         startListening();
     }
 };
-
 </script>
 
 <style scoped></style>
