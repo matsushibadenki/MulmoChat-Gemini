@@ -1,5 +1,5 @@
 // server/routes/api.ts
-// Geminiクライアントのインポート元を正しいパッケージ名に修正
+// 構文エラーとモデル名を修正
 
 import express, { Request, Response, Router } from "express";
 import dotenv from "dotenv";
@@ -16,6 +16,7 @@ const router: Router = express.Router();
 // Gemini and TTS clients
 const geminiKey = process.env.GEMINI_API_KEY;
 const genAI = geminiKey ? new GoogleGenerativeAI(geminiKey) : null;
+const ttsClient = new TextToSpeechClient();
 // const speechClient = new SpeechClient(); // Future implementation
 
 // Future implementation: WebSocket server for streaming Speech-to-Text
@@ -85,7 +86,7 @@ router.post("/chat", async (req: Request, res: Response): Promise<void> => {
 
   try {
     const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
+      model: "gemini-1.5-flash-latest",
       safetySettings: [
         {
           category: HarmCategory.HARM_CATEGORY_HARASSMENT,
@@ -160,7 +161,7 @@ router.post(
     }
 
     try {
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-image-preview" });
+      const model = genAI.getGenerativeModel({ model: "gemini-pro-vision" });
 
       const contents: {
         text?: string;
