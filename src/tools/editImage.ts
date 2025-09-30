@@ -1,3 +1,5 @@
+// src/tools/editImage.ts
+
 import { ToolPlugin, ToolContext, ToolResult } from "./type";
 import { generateImageCommon } from "./generateImage";
 import ImageView from "./views/image.vue";
@@ -6,7 +8,6 @@ import ImagePreview from "./previews/image.vue";
 const toolName = "editImage";
 
 const toolDefinition = {
-  type: "function" as const,
   name: toolName,
   description: "Edit the previously generated image based on a text prompt.",
   parameters: {
