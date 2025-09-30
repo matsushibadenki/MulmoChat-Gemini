@@ -3,7 +3,7 @@
     <div role="toolbar" class="flex justify-between items-center">
       <h1 class="text-2xl font-bold">
         MulmoChat
-        <span class="text-sm text-gray-500 font-normal"
+        <span class="hidden sm:inline text-sm text-gray-500 font-normal"
           >NLUI of AI-native Operating System with Gemini</span
         >
       </h1>
@@ -22,8 +22,11 @@
       </button>
     </div>
 
-    <div class="flex space-x-4" style="height: calc(100vh - 80px)">
-      <div class="flex-1 flex flex-col">
+    <div
+      class="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4"
+      style="height: calc(100vh - 80px)"
+    >
+      <div class="flex-1 flex flex-col min-h-0">
         <div class="flex-1 border rounded bg-gray-50 overflow-hidden">
           <component
             v-if="
