@@ -1,6 +1,4 @@
 // server/routes/api.ts
-// Gemini APIのモデル名を現在利用可能な最新の安定版に修正
-
 import express, { Request, Response, Router } from "express";
 import dotenv from "dotenv";
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
@@ -17,17 +15,6 @@ const router: Router = express.Router();
 const geminiKey = process.env.GEMINI_API_KEY;
 const genAI = geminiKey ? new GoogleGenerativeAI(geminiKey) : null;
 
-let ttsClient: TextToSpeechClient | null = null;
-try {
-  ttsClient = new TextToSpeechClient();
-} catch (error) {
-  console.warn("⚠️ Could not initialize TextToSpeechClient. Speech synthesis will be disabled. Error:", error.message);
-}
-
-// Gemini and TTS clients
-const geminiKey = process.env.GEMINI_API_KEY;
-const genAI = geminiKey ? new GoogleGenerativeAI(geminiKey) : null;
-const ttsClient = new TextToSpeechClient();
 
 // const speechClient = new SpeechClient(); // Future implementation
 
@@ -75,7 +62,15 @@ export const upgradeWebSocket = (request, socket, head) => {
 };
 */
 
-// Session start endpoint (modified to remove OpenAI)
+
+// TextToSpeechClientの初期化をtry...catchで囲む
+let ttsClient: TextToSpeechClient | null = null;
+try {
+  ttsClient = new TextToSpeechClient();
+} catch (error) {
+  console.warn("⚠️ Could not initialize TextToSpeechClient. Speech synthesis will be disabled. Error:", error.message);
+}
+
 router.get("/start", async (req: Request, res: Response): Promise<void> => {
   const googleMapKey = process.env.GOOGLE_MAP_API_KEY;
 
@@ -88,8 +83,6 @@ router.get("/start", async (req: Request, res: Response): Promise<void> => {
   res.json(responseData);
 });
 
-
-// New chat endpoint for Gemini
 router.post("/chat", async (req: Request, res: Response): Promise<void> => {
   if (!genAI) {
     res.status(500).json({ error: "GEMINI_API_KEY not configured" });
@@ -99,7 +92,7 @@ router.post("/chat", async (req: Request, res: Response): Promise<void> => {
 
   try {
     const model = genAI.getGenerativeModel({
-      model: "gemini-pro-latest",
+      model: "gemini-pro-latest", // ★ listModels.tsで確認したモデル名
       safetySettings: [
         { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
         { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
@@ -120,7 +113,6 @@ router.post("/chat", async (req: Request, res: Response): Promise<void> => {
   }
 });
 
-// New Text-to-Speech endpoint
 router.post("/synthesize-speech", async (req: Request, res: Response): Promise<void> => {
     if (!ttsClient) {
         res.status(500).json({ error: "Text-to-Speech client is not initialized. Please configure Google Cloud credentials." });
@@ -147,8 +139,6 @@ router.post("/synthesize-speech", async (req: Request, res: Response): Promise<v
     }
 });
 
-
-// Generate image endpoint (no changes needed here, as it already uses Gemini)
 router.post("/generate-image", async (req: Request, res: Response): Promise<void> => {
     const { prompt, images } = req.body;
     if (!prompt || !genAI) {
@@ -158,7 +148,7 @@ router.post("/generate-image", async (req: Request, res: Response): Promise<void
     }
 
     try {
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-image-preview" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-image-preview" }); // ★ listModels.tsで確認した画像生成モデル名
         const contents: any[] = [{ text: prompt }];
         if (images) {
             for (const image of images) {
@@ -176,14 +166,22 @@ router.post("/generate-image", async (req: Request, res: Response): Promise<void
                 returnValue.imageData = part.inlineData.data;
             }
         }
+        if (!returnValue.message) {
+            returnValue.message = returnValue.imageData
+              ? "image generation succeeded"
+              : "no image data found in response";
+        }
         res.json(returnValue);
-    } catch (error) {
-        console.error("Image generation failed", error);
-        res.status(500).json({ error: "Failed to generate image" });
+    } catch (error: unknown) {
+        console.error("*** Image generation failed", error);
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        res.status(500).json({
+            error: "Failed to generate image",
+            details: errorMessage,
+        });
     }
 });
 
-// Browse endpoint using mulmocast puppeteerCrawlerAgent
 router.post("/browse", async (req: Request, res: Response): Promise<void> => {
   const { url } = req.body;
 
@@ -209,10 +207,7 @@ router.post("/browse", async (req: Request, res: Response): Promise<void> => {
   }
 });
 
-// Exa search endpoint
-router.post(
-  "/exa-search",
-  async (req: Request, res: Response): Promise<void> => {
+router.post("/exa-search", async (req: Request, res: Response): Promise<void> => {
     const {
       query,
       numResults = 3,
@@ -258,10 +253,7 @@ router.post(
   },
 );
 
-// Twitter oEmbed proxy endpoint
-router.get(
-  "/twitter-embed",
-  async (req: Request, res: Response): Promise<void> => {
+router.get("/twitter-embed", async (req: Request, res: Response): Promise<void> => {
     const { url } = req.query;
 
     if (!url || typeof url !== "string") {
@@ -270,14 +262,8 @@ router.get(
     }
 
     try {
-      // Validate that it's a Twitter/X URL
       const urlObj = new URL(url);
-      const isValidTwitterUrl = [
-        "twitter.com",
-        "www.twitter.com",
-        "x.com",
-        "www.x.com",
-      ].includes(urlObj.hostname);
+      const isValidTwitterUrl = ["twitter.com", "www.twitter.com", "x.com", "www.x.com"].includes(urlObj.hostname);
 
       if (!isValidTwitterUrl) {
         res.status(400).json({ error: "URL must be a Twitter/X URL" });
@@ -285,13 +271,10 @@ router.get(
       }
 
       const oembedUrl = `https://publish.twitter.com/oembed?url=${encodeURIComponent(url)}&theme=light&maxwidth=500&hide_thread=false&omit_script=false`;
-
       const response = await fetch(oembedUrl);
 
       if (!response.ok) {
-        throw new Error(
-          `Twitter oEmbed API error: ${response.status} ${response.statusText}`,
-        );
+        throw new Error(`Twitter oEmbed API error: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
@@ -304,8 +287,7 @@ router.get(
       });
     } catch (error: unknown) {
       console.error("Twitter embed failed:", error);
-      const errorMessage =
-        error instanceof Error ? error.message : "Unknown error";
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
       res.status(500).json({
         error: "Failed to fetch Twitter embed",
         details: errorMessage,
@@ -314,7 +296,6 @@ router.get(
   },
 );
 
-// Wikipedia Search Endpoint
 router.post("/wikipedia-search", async (req: Request, res: Response): Promise<void> => {
     const { query } = req.body;
     if (!query) {
@@ -323,7 +304,6 @@ router.post("/wikipedia-search", async (req: Request, res: Response): Promise<vo
     }
 
     try {
-        // 1. Search for Wikipedia article
         const searchUrl = `https://ja.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&format=json`;
         const searchResponse = await fetch(searchUrl);
         const searchData = await searchResponse.json();
@@ -333,7 +313,6 @@ router.post("/wikipedia-search", async (req: Request, res: Response): Promise<vo
         }
         const articleTitle = searchData.query.search[0].title;
 
-        // 2. Get article summary
         const summaryUrl = `https://ja.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(articleTitle)}&prop=extracts&exintro&explaintext&format=json`;
         const summaryResponse = await fetch(summaryUrl);
         const summaryData = await summaryResponse.json();
@@ -341,7 +320,6 @@ router.post("/wikipedia-search", async (req: Request, res: Response): Promise<vo
         const summary = page.extract;
         const pageUrl = `https://ja.wikipedia.org/wiki/${encodeURIComponent(articleTitle)}`;
 
-        // 3. Get main image from the article
         const imageUrl = `https://ja.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(articleTitle)}&prop=pageimages&pithumbsize=500&format=json`;
         const imageResponse = await fetch(imageUrl);
         const imageData = await imageResponse.json();
