@@ -1,3 +1,5 @@
+// src/components/Sidebar.vue
+
 <template>
   <div
     class="w-full md:w-60 md:flex-shrink-0 bg-gray-50 border rounded p-4 flex flex-col space-y-4 h-2/5 md:h-full"
@@ -115,7 +117,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick, defineProps, defineEmits } from "vue";
+import { ref, nextTick } from "vue";
 import type { ToolResult } from "../tools/type";
 import { getToolPlugin } from "../tools/type";
 
