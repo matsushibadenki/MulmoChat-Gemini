@@ -17,6 +17,7 @@ const router: Router = express.Router();
 const geminiKey = process.env.GEMINI_API_KEY;
 const genAI = geminiKey ? new GoogleGenerativeAI(geminiKey) : null;
 const ttsClient = new TextToSpeechClient();
+
 // const speechClient = new SpeechClient(); // Future implementation
 
 // Future implementation: WebSocket server for streaming Speech-to-Text
@@ -76,6 +77,7 @@ router.get("/start", async (req: Request, res: Response): Promise<void> => {
   res.json(responseData);
 });
 
+
 // New chat endpoint for Gemini
 router.post("/chat", async (req: Request, res: Response): Promise<void> => {
   if (!genAI) {
@@ -86,24 +88,12 @@ router.post("/chat", async (req: Request, res: Response): Promise<void> => {
 
   try {
     const model = genAI.getGenerativeModel({
-      model: "gemini-pro",
+      model: "gemini-pro-latest", // ★ 確認済みの安定版モデル名
       safetySettings: [
-        {
-          category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-          threshold: HarmBlockThreshold.BLOCK_NONE,
-        },
-        {
-            category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-            threshold: HarmBlockThreshold.BLOCK_NONE,
-        },
-        {
-            category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-            threshold: HarmBlockThreshold.BLOCK_NONE,
-        },
-        {
-            category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-            threshold: HarmBlockThreshold.BLOCK_NONE,
-        },
+        { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+        { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+        { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+        { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
       ],
       tools: tools ? { functionDeclarations: tools } : undefined,
     });
@@ -143,85 +133,39 @@ router.post("/synthesize-speech", async (req: Request, res: Response): Promise<v
 
 
 // Generate image endpoint (no changes needed here, as it already uses Gemini)
-router.post(
-  "/generate-image",
-  async (req: Request, res: Response): Promise<void> => {
+router.post("/generate-image", async (req: Request, res: Response): Promise<void> => {
     const { prompt, images } = req.body;
-
-    if (!prompt) {
-      res.status(400).json({ error: "Prompt is required" });
-      return;
-    }
-
-    if (!genAI) {
-      res
-        .status(500)
-        .json({ error: "GEMINI_API_KEY environment variable not set" });
-      return;
+    if (!prompt || !genAI) {
+        const message = !genAI ? "GEMINI_API_KEY not set" : "Prompt is required";
+        res.status(500).json({ error: message });
+        return;
     }
 
     try {
-      const model = genAI.getGenerativeModel({ model: "gemini-pro-vision" });
-
-      const contents: {
-        text?: string;
-        inlineData?: { mimeType: string; data: string };
-      }[] = [{ text: prompt }];
-      for (const image of images ?? []) {
-        contents.push({ inlineData: { mimeType: "image/png", data: image } });
-      }
-      const response = await model.generateContent({ contents });
-      const parts = response.response.candidates?.[0]?.content?.parts ?? [];
-      const returnValue: {
-        success: boolean;
-        message: string | undefined;
-        imageData: string | undefined;
-      } = {
-        success: false,
-        message: undefined,
-        imageData: undefined,
-      };
-
-      console.log(
-        "*** Gemini image generation response parts:",
-        parts.length,
-        prompt,
-      );
-
-      for (const part of parts) {
-        if (part.text) {
-          console.log("*** Gemini image generation response:", part.text);
-          returnValue.message = part.text;
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-image-preview" }); // ★ 確認済みの画像生成モデル名
+        const contents: any[] = [{ text: prompt }];
+        if (images) {
+            for (const image of images) {
+                contents.push({ inlineData: { mimeType: "image/png", data: image } });
+            }
         }
-        if (part.inlineData) {
-          const imageData = part.inlineData.data;
-          if (imageData) {
-            console.log("*** Image generation succeeded");
-            returnValue.success = true;
-            returnValue.imageData = imageData;
-          } else {
-            console.log("*** the part has inlineData, but no image data", part);
-          }
-        }
-      }
-      if (!returnValue.message) {
-        returnValue.message = returnValue.imageData
-          ? "image generation succeeded"
-          : "no image data found in response";
-      }
+        const response = await model.generateContent({ contents });
+        const parts = response.response.candidates?.[0]?.content?.parts ?? [];
+        const returnValue: { success: boolean; message?: string; imageData?: string } = { success: false };
 
-      res.json(returnValue);
-    } catch (error: unknown) {
-      console.error("*** Image generation failed", error);
-      const errorMessage =
-        error instanceof Error ? error.message : "Unknown error";
-      res.status(500).json({
-        error: "Failed to generate image",
-        details: errorMessage,
-      });
+        for (const part of parts) {
+            if (part.text) returnValue.message = part.text;
+            if (part.inlineData) {
+                returnValue.success = true;
+                returnValue.imageData = part.inlineData.data;
+            }
+        }
+        res.json(returnValue);
+    } catch (error) {
+        console.error("Image generation failed", error);
+        res.status(500).json({ error: "Failed to generate image" });
     }
-  },
-);
+});
 
 // Browse endpoint using mulmocast puppeteerCrawlerAgent
 router.post("/browse", async (req: Request, res: Response): Promise<void> => {
