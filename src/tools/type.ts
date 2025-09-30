@@ -1,3 +1,5 @@
+// src/tools/type.ts
+
 import * as GenerateImagePlugin from "./generateImage";
 import * as EditImagePlugin from "./editImage";
 import * as BrowsePlugin from "./browse";
@@ -6,7 +8,8 @@ import * as MapPlugin from "./map";
 import * as ExaPlugin from "./exa";
 import * as OthelloPlugin from "./othello";
 import * as CanvasPlugin from "./canvas";
-import * as WikipediaPlugin from "./wikipedia"; // 追記
+import * as WikipediaPlugin from "./wikipedia";
+import * as GenerateImageWithTextPlugin from "./generateImageWithText"; // 追記
 import type { StartApiResponse } from "../../server/types";
 import type { MulmoScript } from "mulmocast";
 import { v4 as uuidv4 } from "uuid";
@@ -25,6 +28,7 @@ export interface ToolResult {
   jsonData?: any;
   instructions?: string;
   htmlData?: string;
+  textOverImage?: string; // 追記
   location?: string | { lat: number; lng: number };
   updating?: boolean;
   prompt?: string;
@@ -72,6 +76,7 @@ const pluginList = [
   OthelloPlugin,
   CanvasPlugin,
   WikipediaPlugin,
+  GenerateImageWithTextPlugin, // 追記
 ];
 
 export const pluginTools = (startResponse?: StartApiResponse) => {
