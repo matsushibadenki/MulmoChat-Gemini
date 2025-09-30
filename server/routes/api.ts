@@ -16,6 +16,17 @@ const router: Router = express.Router();
 // Gemini and TTS clients
 const geminiKey = process.env.GEMINI_API_KEY;
 const genAI = geminiKey ? new GoogleGenerativeAI(geminiKey) : null;
+
+let ttsClient: TextToSpeechClient | null = null;
+try {
+  ttsClient = new TextToSpeechClient();
+} catch (error) {
+  console.warn("⚠️ Could not initialize TextToSpeechClient. Speech synthesis will be disabled. Error:", error.message);
+}
+
+// Gemini and TTS clients
+const geminiKey = process.env.GEMINI_API_KEY;
+const genAI = geminiKey ? new GoogleGenerativeAI(geminiKey) : null;
 const ttsClient = new TextToSpeechClient();
 
 // const speechClient = new SpeechClient(); // Future implementation
@@ -88,7 +99,7 @@ router.post("/chat", async (req: Request, res: Response): Promise<void> => {
 
   try {
     const model = genAI.getGenerativeModel({
-      model: "gemini-pro-latest", // ★ 確認済みの安定版モデル名
+      model: "gemini-pro-latest",
       safetySettings: [
         { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
         { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
@@ -111,6 +122,11 @@ router.post("/chat", async (req: Request, res: Response): Promise<void> => {
 
 // New Text-to-Speech endpoint
 router.post("/synthesize-speech", async (req: Request, res: Response): Promise<void> => {
+    if (!ttsClient) {
+        res.status(500).json({ error: "Text-to-Speech client is not initialized. Please configure Google Cloud credentials." });
+        return;
+    }
+
     const { text } = req.body;
     if (!text) {
         res.status(400).json({ error: "Text is required" });
@@ -142,7 +158,7 @@ router.post("/generate-image", async (req: Request, res: Response): Promise<void
     }
 
     try {
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-image-preview" }); // ★ 確認済みの画像生成モデル名
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-image-preview" });
         const contents: any[] = [{ text: prompt }];
         if (images) {
             for (const image of images) {
