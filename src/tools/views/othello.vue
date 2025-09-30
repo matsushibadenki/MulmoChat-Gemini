@@ -1,12 +1,10 @@
 <template>
   <div class="w-full h-full flex flex-col items-center justify-center p-4">
     <div v-if="gameState" class="flex flex-col items-center">
-      <!-- Turn indicator -->
       <div class="text-white text-lg font-bold mb-4 text-center">
         Current Turn: {{ currentPlayerName }} ({{ currentColorName }})
       </div>
 
-      <!-- Game board -->
       <div
         class="grid grid-cols-8 gap-0.5 p-4 bg-green-800 rounded-lg border-2 border-green-900"
       >
@@ -18,17 +16,15 @@
           @mouseenter="handleCellHover(index, true)"
           @mouseleave="handleCellHover(index, false)"
         >
-          <!-- Piece -->
           <div
             v-if="cell.piece"
             :class="getPieceClass(cell.piece)"
-            class="w-10 h-10 rounded-full border-2 border-gray-600"
+            class="w-7 h-7 sm:w-10 sm:h-10 rounded-full border-2 border-gray-600"
           ></div>
 
-          <!-- Legal move indicator -->
           <div
             v-else-if="cell.isLegalMove && !isComputerTurn"
-            class="w-10 h-10 flex items-center justify-center text-gray-300 text-sm font-bold"
+            class="w-7 h-7 sm:w-10 sm:h-10 flex items-center justify-center text-gray-300 text-sm font-bold"
           >
             {{ cell.label }}
           </div>
@@ -103,7 +99,7 @@ const flatBoard = computed(() => {
 
 function getCellClass(cell: any, index: number) {
   const baseClasses =
-    "w-12 h-12 flex items-center justify-center border border-green-900 bg-green-700";
+    "w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center border border-green-900 bg-green-700";
   const hoverClasses =
     cell.isLegalMove && !isComputerTurn.value && hoveredCell.value === index
       ? "bg-green-600"
