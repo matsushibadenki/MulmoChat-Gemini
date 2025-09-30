@@ -1,3 +1,5 @@
+// src/tools/mulmocast.ts
+
 import { ToolPlugin, ToolContext, ToolResult } from "./type";
 import { blankImageBase64 } from "./blank";
 import MulmocastView from "./views/mulmocast.vue";
@@ -8,7 +10,6 @@ import { v4 as uuidv4 } from "uuid";
 const toolName = "pushMulmoScript";
 
 const toolDefinition = {
-  type: "function" as const,
   name: toolName,
   description:
     "Let MulmoCast to process a given MulmoScript to generate a presentation of a given topic or story.",
@@ -32,7 +33,6 @@ const toolDefinition = {
             },
           },
           required: ["text"],
-          additionalProperties: false,
         },
         minItems: 1,
       },
@@ -43,7 +43,6 @@ const toolDefinition = {
       },
     },
     required: ["title", "lang", "beats", "style"],
-    additionalProperties: false,
   },
 };
 
