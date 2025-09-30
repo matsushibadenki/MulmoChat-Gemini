@@ -1,6 +1,9 @@
+// server/routes/api.ts
+// Geminiクライアントの初期化方法を修正
+
 import express, { Request, Response, Router } from "express";
 import dotenv from "dotenv";
-import { GoogleGenAI, HarmCategory, HarmBlockThreshold } from "@google/genai";
+import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/genai";
 import { TextToSpeechClient } from "@google-cloud/text-to-speech";
 import { puppeteerCrawlerAgent } from "mulmocast";
 import { StartApiResponse } from "../types";
@@ -12,8 +15,7 @@ const router: Router = express.Router();
 
 // Gemini and TTS clients
 const geminiKey = process.env.GEMINI_API_KEY;
-const genAI = geminiKey ? new GoogleGenAI({ apiKey: geminiKey }) : null;
-const ttsClient = new TextToSpeechClient();
+const genAI = geminiKey ? new GoogleGenerativeAI(geminiKey) : null;
 // const speechClient = new SpeechClient(); // Future implementation
 
 // Future implementation: WebSocket server for streaming Speech-to-Text
