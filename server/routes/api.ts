@@ -1,9 +1,9 @@
 // server/routes/api.ts
-// Geminiクライアントの初期化方法を修正
+// Geminiクライアントのインポート元を正しいパッケージ名に修正
 
 import express, { Request, Response, Router } from "express";
 import dotenv from "dotenv";
-import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/genai";
+import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
 import { TextToSpeechClient } from "@google-cloud/text-to-speech";
 import { puppeteerCrawlerAgent } from "mulmocast";
 import { StartApiResponse } from "../types";
