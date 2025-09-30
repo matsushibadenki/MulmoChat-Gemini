@@ -9,7 +9,7 @@ import * as ExaPlugin from "./exa";
 import * as OthelloPlugin from "./othello";
 import * as CanvasPlugin from "./canvas";
 import * as WikipediaPlugin from "./wikipedia";
-import * as GenerateImageWithTextPlugin from "./generateImageWithText"; // 追記
+import * as GenerateImageWithTextPlugin from "./generateImageWithText";
 import type { StartApiResponse } from "../../server/types";
 import type { MulmoScript } from "mulmocast";
 import { v4 as uuidv4 } from "uuid";
@@ -28,7 +28,7 @@ export interface ToolResult {
   jsonData?: any;
   instructions?: string;
   htmlData?: string;
-  textOverImage?: string; // 追記
+  textOverImage?: string;
   location?: string | { lat: number; lng: number };
   updating?: boolean;
   prompt?: string;
@@ -43,7 +43,6 @@ export interface ToolResultComplete extends ToolResult {
 
 export interface ToolPlugin {
   toolDefinition: {
-    type: "function";
     name: string;
     description: string;
     parameters?: {
@@ -76,7 +75,7 @@ const pluginList = [
   OthelloPlugin,
   CanvasPlugin,
   WikipediaPlugin,
-  GenerateImageWithTextPlugin, // 追記
+  GenerateImageWithTextPlugin,
 ];
 
 export const pluginTools = (startResponse?: StartApiResponse) => {
