@@ -1,5 +1,4 @@
 // src/tools/generateImageWithText.ts
-// 画像生成とテキストオーバーレイを組み合わせた新しいツール
 
 import { ToolPlugin, ToolContext, ToolResult } from "./type";
 import { generateImageCommon } from "./generateImage";
@@ -9,7 +8,6 @@ import ImageWithTextPreview from "./previews/imageWithText.vue";
 const toolName = "generateImageWithText";
 
 const toolDefinition = {
-  type: "function" as const,
   name: toolName,
   description:
     "Generate an image from a text prompt and overlay it with a specified text. Use this when you want to display accurate text on top of an image.",
