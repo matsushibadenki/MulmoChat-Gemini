@@ -1,3 +1,5 @@
+// src/tools/generateImage.ts
+
 import { ToolPlugin, ToolContext, ToolResult } from "./type";
 import ImageView from "./views/image.vue";
 import ImagePreview from "./previews/image.vue";
@@ -5,7 +7,6 @@ import ImagePreview from "./previews/image.vue";
 const toolName = "generateImage";
 
 const toolDefinition = {
-  type: "function" as const,
   name: toolName,
   description: "Generate an image from a text prompt.",
   parameters: {
