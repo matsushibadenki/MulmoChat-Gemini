@@ -1,3 +1,5 @@
+// src/tools/canvas.ts
+
 import { ToolPlugin, ToolContext, ToolResult } from "./type";
 import CanvasView from "./views/canvas.vue";
 import ImagePreview from "./previews/image.vue";
@@ -5,7 +7,6 @@ import ImagePreview from "./previews/image.vue";
 const toolName = "openCanvas";
 
 const toolDefinition = {
-  type: "function" as const,
   name: toolName,
   description:
     "Open a drawing canvas for the user to create drawings, sketches, or diagrams.",
