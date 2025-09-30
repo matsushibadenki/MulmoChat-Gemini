@@ -1,3 +1,5 @@
+// src/tools/othello.ts
+
 import { ToolPlugin, ToolContext, ToolResult } from "./type";
 import { playOthello, Command, Side } from "./logic/othelloLogic";
 import OthelloView from "./views/othello.vue";
@@ -6,7 +8,6 @@ import OthelloPreview from "./previews/othello.vue";
 const toolName = "playOthello";
 
 const toolDefinition = {
-  type: "function" as const,
   name: toolName,
   description:
     "Play Othello/Reversi game with the user. You can start a new game, make moves, or pass turns.",
@@ -75,7 +76,6 @@ const toolDefinition = {
       },
     },
     required: ["action"],
-    additionalProperties: false,
   },
 };
 
