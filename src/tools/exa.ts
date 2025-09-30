@@ -1,3 +1,5 @@
+// src/tools/exa.ts
+
 import { ToolPlugin, ToolContext, ToolResult } from "./type";
 import ExaView from "./views/exa.vue";
 import ExaPreview from "./previews/exa.vue";
@@ -5,7 +7,6 @@ import ExaPreview from "./previews/exa.vue";
 const toolName = "exaSearch";
 
 const toolDefinition = {
-  type: "function" as const,
   name: toolName,
   description:
     "Search the web using Exa API for high-quality, relevant results",
