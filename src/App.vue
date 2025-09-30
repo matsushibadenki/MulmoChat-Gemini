@@ -23,25 +23,6 @@
     </div>
 
     <div class="flex space-x-4" style="height: calc(100vh - 80px)">
-      <Sidebar
-        ref="sidebarRef"
-        :chat-active="chatActive"
-        :connecting="connecting"
-        :plugin-results="toolResults"
-        :is-generating-image="isGeneratingImage"
-        :generating-message="generatingMessage"
-        :selected-result="selectedResult"
-        :user-input="userInput"
-        :is-muted="isMuted"
-        @start-chat="startChat"
-        @stop-chat="stopChat"
-        @toggle-mute="toggleMute"
-        @select-result="handleSelectResult"
-        @send-text-message="sendTextMessage"
-        @update:user-input="userInput = $event"
-        @upload-images="handleUploadImages"
-      />
-
       <div class="flex-1 flex flex-col">
         <div class="flex-1 border rounded bg-gray-50 overflow-hidden">
           <component
@@ -63,6 +44,25 @@
           </div>
         </div>
       </div>
+
+      <Sidebar
+        ref="sidebarRef"
+        :chat-active="chatActive"
+        :connecting="connecting"
+        :plugin-results="toolResults"
+        :is-generating-image="isGeneratingImage"
+        :generating-message="generatingMessage"
+        :selected-result="selectedResult"
+        :user-input="userInput"
+        :is-muted="isMuted"
+        @start-chat="startChat"
+        @stop-chat="stopChat"
+        @toggle-mute="toggleMute"
+        @select-result="handleSelectResult"
+        @send-text-message="sendTextMessage"
+        @update:user-input="userInput = $event"
+        @upload-images="handleUploadImages"
+      />
     </div>
 
     <div
