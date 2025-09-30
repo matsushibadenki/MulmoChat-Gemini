@@ -1,8 +1,7 @@
 <template>
   <div
-    class="w-60 flex-shrink-0 bg-gray-50 border rounded p-4 flex flex-col space-y-4"
+    class="w-full md:w-60 md:flex-shrink-0 bg-gray-50 border rounded p-4 flex flex-col space-y-4 h-2/5 md:h-full"
   >
-    <!-- Voice chat controls -->
     <div class="space-y-2 flex-shrink-0">
       <button
         v-if="!chatActive"
@@ -37,7 +36,6 @@
       <audio ref="audioEl" autoplay></audio>
     </div>
 
-    <!-- Generated images container -->
     <div class="flex-1 flex flex-col min-h-0">
       <div
         ref="imageContainer"
