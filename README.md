@@ -28,3 +28,8 @@ yarn dev
 When you open the browser, allow it to access the microphone.
 
 Click the "Start Voice Chat", and start talking to the AI, which has a capability to generate images.
+
+## **About Reinstall**
+rm -rf node_modules yarn.lock
+yarn install
+yarn dev
